@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/Songmu/go-httpdate"
 )
 
 /*
@@ -48,7 +46,8 @@ func parseParams(paramString string) map[string]string {
 }
 
 func outputSlowQueryFile(outputDirPath string, state SlowQuery) {
-	t, err := httpdate.Str2Time(state.LoggedTime, nil)
+	//t, err := httpdate.Str2Time(state.LoggedTime, "2006-01-02 15:04:05")
+	t, err := time.Parse("2006-01-02 15:04:05.000 MST", state.LoggedTime)
 	if err != nil {
 		t = time.Now()
 	}
@@ -76,15 +75,20 @@ func outputSlowQueryFile(outputDirPath string, state SlowQuery) {
 
 func main() {
 	inputFilePath := flag.String("f", "", "Input File Path")
-	outputDirPath := flag.String("o", ".", "Output Dir Path")
+	outputDirBasePath := flag.String("o", ".", "Output Dir Path")
 	flag.Parse()
 
-	if !fileExists(*outputDirPath) {
+	if !fileExists(*outputDirBasePath) {
 		fmt.Println("output dir does not exist")
 		return
 	}
 
-	patternStart := regexp.MustCompile("(.*)LOG:  duration: (.*) ms  execute <unnamed>: (.*)")
+	t := time.Now()
+	ts := t.Format("20060102150405")
+	outputDirPath := filepath.Join(*outputDirBasePath, ts)
+	os.MkdirAll(outputDirPath, os.ModePerm)
+
+	patternStart := regexp.MustCompile("^\\[([^\\]]*)\\].*LOG:  duration: (.*) ms  execute <unnamed>: (.*)")
 	patternEnd := regexp.MustCompile("(.*)DETAIL:  parameters: (.*)")
 
 	stats := SlowQuery{
@@ -120,7 +124,7 @@ func main() {
 			if m != nil {
 				stats.Params = m[2]
 				if stats.Duration > 0 {
-					outputSlowQueryFile(*outputDirPath, stats)
+					outputSlowQueryFile(outputDirPath, stats)
 				}
 
 				stats = SlowQuery{
