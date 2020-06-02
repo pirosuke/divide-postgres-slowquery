@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +15,15 @@ import (
 )
 
 /*
-SlowQuery describes slow query
+Config describes divide config setting.
+*/
+type Config struct {
+	PatternStart string `json:"pattern_start"`
+	PatternEnd   string `json:"pattern_end"`
+}
+
+/*
+SlowQuery describes slow query.
 */
 type SlowQuery struct {
 	SQL        string
@@ -76,6 +85,7 @@ func outputSlowQueryFile(outputDirPath string, state SlowQuery) {
 func main() {
 	inputFilePath := flag.String("f", "", "Input File Path")
 	outputDirBasePath := flag.String("o", ".", "Output Dir Path")
+	configFilePath := flag.String("c", "", "Config File Path")
 	flag.Parse()
 
 	if !fileExists(*outputDirBasePath) {
@@ -83,13 +93,36 @@ func main() {
 		return
 	}
 
+	config := new(Config)
+
+	if *configFilePath != "" {
+		if !fileExists(*configFilePath) {
+			fmt.Println("config file does not exist")
+			return
+		}
+
+		jsonContent, err := ioutil.ReadFile(*configFilePath)
+		if err != nil {
+			fmt.Println("failed to read config file: " + *configFilePath)
+			return
+		}
+
+		if err := json.Unmarshal(jsonContent, config); err != nil {
+			fmt.Println("failed to read config file: " + *configFilePath)
+			return
+		}
+	} else {
+		config.PatternStart = "^\\[([^\\]]*)\\].*LOG:  duration: (.*) ms  execute <unnamed>: (.*)"
+		config.PatternEnd = "(.*)DETAIL:  parameters: (.*)"
+	}
+
 	t := time.Now()
 	ts := t.Format("20060102150405")
 	outputDirPath := filepath.Join(*outputDirBasePath, ts)
 	os.MkdirAll(outputDirPath, os.ModePerm)
 
-	patternStart := regexp.MustCompile("^\\[([^\\]]*)\\].*LOG:  duration: (.*) ms  execute <unnamed>: (.*)")
-	patternEnd := regexp.MustCompile("(.*)DETAIL:  parameters: (.*)")
+	patternStart := regexp.MustCompile(config.PatternStart)
+	patternEnd := regexp.MustCompile(config.PatternEnd)
 
 	stats := SlowQuery{
 		Duration: 0,
