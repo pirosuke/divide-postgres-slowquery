@@ -1,0 +1,4 @@
+{
+    "pattern_start": "^< ([^\\]]*) >LOG:  duration: (.*) ms  execute <unnamed>: (.*)",
+    "pattern_end": "(.*)DETAIL:  parameters: (.*)"
+}
