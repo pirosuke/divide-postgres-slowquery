@@ -1,4 +1,4 @@
 {
-    "pattern_start": "^^< ([^\\]]*) >LOG:  期間: (.*) ミリ秒  実行 <unnamed>: (.*)",
+    "pattern_start": "^< ([^\\]]*) >LOG:  期間: (.*) ミリ秒  実行 <unnamed>: (.*)",
     "pattern_end": "(.*)詳細:  パラメータ: (.*)"
 }
