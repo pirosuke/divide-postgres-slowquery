@@ -83,6 +83,12 @@ func outputSlowQueryFile(outputDirPath string, state SlowQuery) {
 }
 
 func main() {
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: divide_pg_slowquery [flags]\n")
+		flag.PrintDefaults()
+	}
+
 	inputFilePath := flag.String("f", "", "Input File Path")
 	outputDirBasePath := flag.String("o", ".", "Output Dir Path")
 	configFilePath := flag.String("c", "", "Config File Path")
