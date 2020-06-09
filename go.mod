@@ -1,3 +1,3 @@
-module github.com/pirosuke/divide_pg_slowquery
+module github.com/pirosuke/divide-postgres-slowquery
 
 go 1.14
