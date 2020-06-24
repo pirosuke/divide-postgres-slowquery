@@ -26,12 +26,11 @@ type Config struct {
 SlowQuery describes slow query.
 */
 type SlowQuery struct {
-	SQL        string
-	LoggedTime string
-	Duration   float64
-	Params     string
-	State      string
-	IsEnded    bool
+	SQL          string
+	LoggedTime   string
+	Duration     float64
+	Params       string
+	IsInProgress bool
 }
 
 func fileExists(filePath string) bool {
@@ -131,9 +130,8 @@ func main() {
 	patternEnd := regexp.MustCompile(config.PatternEnd)
 
 	stats := SlowQuery{
-		Duration: 0,
-		State:    "out",
-		IsEnded:  false,
+		Duration:     0,
+		IsInProgress: false,
 	}
 
 	fp, err := os.Open(*inputFilePath)
@@ -147,7 +145,7 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if stats.State == "out" {
+		if !stats.IsInProgress {
 			m := patternStart.FindStringSubmatch(line)
 			if m != nil {
 				stats.LoggedTime = m[1]
@@ -156,7 +154,7 @@ func main() {
 				stats.Duration = duration
 
 				stats.SQL = m[3] + "\n"
-				stats.State = "in"
+				stats.IsInProgress = true
 			}
 		} else {
 			m := patternEnd.FindStringSubmatch(line)
@@ -167,9 +165,8 @@ func main() {
 				}
 
 				stats = SlowQuery{
-					Duration: 0,
-					State:    "out",
-					IsEnded:  false,
+					Duration:     0,
+					IsInProgress: false,
 				}
 			} else {
 				stats.SQL += line + "\n"
